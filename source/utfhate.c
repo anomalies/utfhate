@@ -33,7 +33,7 @@ struct utfhate_options {
     
     union {
         struct {
-            const char * replacement;
+            char replacement;
         } as_replace;
         
         struct {
@@ -164,7 +164,7 @@ static void utfhate_print_usage(const char *application) {
     printf("Usage: %s [options] < inputfile > output\n", application);
     puts("Available options:");
     
-    for(option = utfhate_command_list; option->name != NULL; ++option) {
+    for (option = utfhate_command_list; option->name != NULL; ++option) {
         printf("\t%s,\t%s:\t%s\n", option->name, option->alternate, option->help_text);
     }
     
@@ -195,7 +195,7 @@ static int utfhate_process_arguments(int argc, char **argv, struct utfhate_optio
 static int utfhate_match_argument(const char *argument, int *argc, char ***argv, struct utfhate_options *options) {
     const struct utfhate_command_option *option;
     
-    for(option = utfhate_command_list; option->name != NULL; ++option) {
+    for (option = utfhate_command_list; option->name != NULL; ++option) {
         if (strcmp(option->name, argument) == 0 || strcmp(option->alternate, argument) == 0) {
             return option->handler(argc, argv, options);
         }
@@ -223,13 +223,13 @@ static int utfhate_command_option_delete(int *arguments, char ***pargv, struct u
 }
 
 static int utfhate_command_option_replace(int *arguments, char ***pargv, struct utfhate_options *options) {
-    if (*arguments < 1) {
-        puts("Replace requires an argument specifying the replacement string");
+    if (*arguments < 1 || strlen(**pargv) != 1) {
+        puts("Replace requires an argument specifying the replacement character");
         
         return -1;
     }
     
-    options->arguments.as_replace.replacement = **pargv;
+    options->arguments.as_replace.replacement = **pargv[0];
     options->command = UTFHATE_COMMAND_INDEX_REPLACE;
     
     (*pargv)++;
@@ -288,7 +288,7 @@ static int utfhate_command_search(const struct utfhate_options *options) {
         char *offset, *marker_offset = scratch_buffer;
         unsigned int utf_found = 0;
         
-        for(offset = line_buffer; *offset != '\0'; ++offset, ++marker_offset) {
+        for (offset = line_buffer; *offset != '\0'; ++offset, ++marker_offset) {
             if (*offset == '\n') {
                 line++;
                 *offset = '\0';
@@ -333,7 +333,7 @@ static int utfhate_command_delete(const struct utfhate_options *options) {
     while (fgets(line_buffer, sizeof(line_buffer), options->source_stream) != NULL) {
         char *offset, *output_offset = scratch_buffer;
         
-        for(offset = line_buffer; *offset != '\0'; ++offset, ++output_offset) {
+        for (offset = line_buffer; *offset != '\0'; ++offset, ++output_offset) {
             if ((unsigned char)*offset > 0x80) {
                 if (utfhate_consume_utf_char(&offset) != 0)
                     break;
@@ -352,7 +352,27 @@ static int utfhate_command_delete(const struct utfhate_options *options) {
 }
 
 static int utfhate_command_replace(const struct utfhate_options *options) {
-    UTFHATE_UNUSED(options);
+    while (fgets(line_buffer, sizeof(line_buffer), options->source_stream) != NULL) {
+        char *offset, *output_offset = scratch_buffer;
+        
+        for (offset = line_buffer; *offset != '\0'; ++offset, ++output_offset) {
+            if ((unsigned char)*offset > 0x80) {
+                *output_offset = options->arguments.as_replace.replacement;
+                
+                if (utfhate_consume_utf_char(&offset) != 0)
+                    break;
+                
+                continue;
+            }
+            
+            *output_offset = *offset;
+        }
+        
+        *output_offset = '\0';
+        
+        fputs(scratch_buffer, options->destination_stream);
+    }
+    
     return 0;
 }
 
@@ -362,7 +382,7 @@ static int utfhate_command_count(const struct utfhate_options *options) {
     while (fgets(line_buffer, sizeof(line_buffer), options->source_stream) != NULL) {
         char *offset;
         
-        for(offset = line_buffer; *offset != '\0'; ++offset) {
+        for (offset = line_buffer; *offset != '\0'; ++offset) {
             if ((unsigned char)*offset > 0x80) {
                 char * old_offset = offset;
                 
