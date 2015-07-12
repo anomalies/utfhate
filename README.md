@@ -2,7 +2,7 @@
 Simple command-line utility to find, mark, count, replace and delete instances of UTF-8 characters in the input stream.
 
 ## Usage
-utfhate currently reads input from **stdout** and writes all output to **stdout**.
+utfhate currently reads input from **stdin** and writes all output to **stdout**.
 
 ```
 utfhate [options] < inputfile
