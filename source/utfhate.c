@@ -68,6 +68,12 @@ static int utfhate_match_argument(
     struct utfhate_options *options
 );
 
+static int utfhate_command_option_help(
+    int *arguments, 
+    char ***pargv, 
+    struct utfhate_options *options
+);
+
 static int utfhate_command_option_search(
     int *arguments, 
     char ***pargv, 
@@ -106,11 +112,13 @@ static int utfhate_command_count(const struct utfhate_options *options);
 static int utfhate_consume_utf_char(char **pbuffer);
 
 static const struct utfhate_command_option utfhate_command_list[] = {
+    { "--help",    "-h", &utfhate_command_option_help,    "Displays this text."                                                                             },
     { "--search",  "-s", &utfhate_command_option_search,  "Searches for UTF-8 characters and, if found, marks their location."                              },
     { "--delete",  "-d", &utfhate_command_option_delete,  "Deletes all UTF-8 characters found in the input (without destroying the source.)"                },
     { "--replace", "-r", &utfhate_command_option_replace, "Replaces all UTF-8 characters with a specified value."                                           }, 
     { "--count",   "-c", &utfhate_command_option_count,   "Counts the number of UTF-8 characters in the input. Modes: 'chars' (default), 'bytes', 'both'."  },
     { "--verbose", "-v", &utfhate_command_option_verbose, "Enables verbose output command output."                                                          },
+    
     
     { NULL, NULL, NULL, NULL }
 };
@@ -165,7 +173,7 @@ static void utfhate_print_usage(const char *application) {
     puts("Available options:");
     
     for (option = utfhate_command_list; option->name != NULL; ++option) {
-        printf("\t%s,\t%s:\t%s\n", option->name, option->alternate, option->help_text);
+        printf("\t%s, %s \t%s\n", option->name, option->alternate, option->help_text);
     }
     
     return;
@@ -202,6 +210,15 @@ static int utfhate_match_argument(const char *argument, int *argc, char ***argv,
     }
     
     printf("Unrecognised option: %s\n", argument);
+    
+    return -1;
+}
+
+static int utfhate_command_option_help(int *arguments, char ***pargv, struct utfhate_options *options)
+{
+    UTFHATE_UNUSED(arguments);
+    UTFHATE_UNUSED(pargv);
+    UTFHATE_UNUSED(options);
     
     return -1;
 }
