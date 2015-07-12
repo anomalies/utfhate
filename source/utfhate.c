@@ -106,11 +106,11 @@ static int utfhate_command_count(const struct utfhate_options *options);
 static int utfhate_consume_utf_char(char **pbuffer);
 
 static const struct utfhate_command_option utfhate_command_list[] = {
-    { "--search",  "-s", &utfhate_command_option_search,  "Searches for UTF-8 characters and, if found, marks their location."               },
-    { "--delete",  "-d", &utfhate_command_option_delete,  "Deletes all UTF-8 characters found in the input (without destroying the source.)" },
-    { "--replace", "-r", &utfhate_command_option_replace, "Replaces all UTF-8 characters with a specified value."                            }, 
-    { "--count",   "-c", &utfhate_command_option_count,   "Counts the number of UTF-8 characters in the input."                              },
-    { "--verbose", "-v", &utfhate_command_option_verbose, "Enables verbose output command output"                                            },
+    { "--search",  "-s", &utfhate_command_option_search,  "Searches for UTF-8 characters and, if found, marks their location."                              },
+    { "--delete",  "-d", &utfhate_command_option_delete,  "Deletes all UTF-8 characters found in the input (without destroying the source.)"                },
+    { "--replace", "-r", &utfhate_command_option_replace, "Replaces all UTF-8 characters with a specified value."                                           }, 
+    { "--count",   "-c", &utfhate_command_option_count,   "Counts the number of UTF-8 characters in the input. Modes: 'chars' (default), 'bytes', 'both'."  },
+    { "--verbose", "-v", &utfhate_command_option_verbose, "Enables verbose output command output."                                                          },
     
     { NULL, NULL, NULL, NULL }
 };
@@ -259,6 +259,10 @@ static int utfhate_command_option_count(int *arguments, char ***pargv, struct ut
             
             (*arguments)--;
             (*pargv)++;
+        } else if (*argument != '-') {
+            printf("Invalid argument '%s' for count. Supported modes are: 'chars', 'bytes' and 'both'\n", argument);
+            
+            return -1;
         }
     }
     
@@ -293,7 +297,7 @@ static int utfhate_command_search(const struct utfhate_options *options) {
                 break;
             }
             
-            if (*offset < 0) {
+            if ((unsigned char)*offset > 0x80) {
                 *marker_offset = '^';
                 
                 if (utfhate_consume_utf_char(&offset) != 0)
@@ -330,7 +334,7 @@ static int utfhate_command_delete(const struct utfhate_options *options) {
         char *offset, *output_offset = scratch_buffer;
         
         for(offset = line_buffer; *offset != '\0'; ++offset, ++output_offset) {
-            if (*offset < 0) {
+            if ((unsigned char)*offset > 0x80) {
                 if (utfhate_consume_utf_char(&offset) != 0)
                     break;
                 
@@ -359,7 +363,7 @@ static int utfhate_command_count(const struct utfhate_options *options) {
         char *offset;
         
         for(offset = line_buffer; *offset != '\0'; ++offset) {
-            if (*offset < 0) {
+            if ((unsigned char)*offset > 0x80) {
                 char * old_offset = offset;
                 
                 if (utfhate_consume_utf_char(&offset) != 0)
