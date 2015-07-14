@@ -307,9 +307,7 @@ static int utfhate_command_search(const struct utfhate_options *options) {
         
         for (offset = line_buffer; *offset != '\0'; ++offset, ++marker_offset) {
             if (*offset == '\n') {
-                line++;
                 *offset = '\0';
-                *marker_offset++ = '\n';
                 
                 break;
             }
@@ -336,6 +334,12 @@ static int utfhate_command_search(const struct utfhate_options *options) {
             fputs(line_buffer, options->destination_stream);
             putc('\n', options->destination_stream);
             fputs(scratch_buffer, options->destination_stream);
+            putc('\n', options->destination_stream);
+        }
+        
+        /* If the final offset is before the end of the buffer that means a new-line was encountered */
+        if (offset < &line_buffer[sizeof(line_buffer)]) {
+            line++;
         }
     }
     
@@ -386,7 +390,6 @@ static int utfhate_command_replace(const struct utfhate_options *options) {
         }
         
         *output_offset = '\0';
-        
         fputs(scratch_buffer, options->destination_stream);
     }
     
